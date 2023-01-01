@@ -1,10 +1,150 @@
-geth是我们的go-ethereum最主要的一个命令行工具。 也是我们的各种网络的接入点(主网络main-net 测试网络test-net 和私有网络)。支持运行在全节点模式或者轻量级节点模式。 其他程序可以通过它暴露的JSON RPC调用来访问以太坊网络的功能。
+geth是我们的go-ethereum最主要的一个命令行工具。 也是我们的各种网络的接入点(主网络main-net 测试网络test-net 和私有网络)。支持运行在**全节点模式**或者**轻量级节点模式**。 其他程序可以通过它暴露的JSON RPC调用来访问以太坊网络的功能。
 
 如果什么命令都不输入直接运行geth。 就会默认启动一个全节点模式的节点。 连接到主网络。 我们看看启动的主要流程是什么，涉及到了那些组件。
 
+## 使用geth搭建本地私有链
 
-## 启动的main函数  cmd/geth/main.go
-看到main函数一上来就直接运行了。 最开始看的时候是有点懵逼的。 后面发现go语言里面有两个默认的函数，一个是main()函数。一个是init()函数。 go语言会自动按照一定的顺序先调用所有包的init()函数。然后才会调用main()函数。 
+这里搭建环境是在mac上
+
+### geth安装
+
+1. 直接下载
+
+   [https://geth.ethereum.org/downloads/](https://links.jianshu.com/go?to=https%3A%2F%2Fgeth.ethereum.org%2Fdownloads%2F)
+
+2. 源码编译
+
+   以太坊GitHub仓库地址：https://github.com/ethereum/go-ethereum.git
+
+   下载以太坊源码
+
+   `go get -u https://github.com/ethereum/go-ethereum.git`
+
+   编译geth
+
+   ```
+   make geth
+   ```
+
+   执行后会在项目的`./build/bin/`目录中生成geth客户端，将生生成的geth移动到go环境的bin目录下
+
+   执行`get version`检查是否能打印成功
+
+### 私链搭建
+
+创建文件夹用来存放私链项目
+
+```
+./private-ethereum
+./private-ethereum/data
+```
+
+新建账户用于后面配置创世区块
+
+```bash
+cd ./private-ethereum
+geth --datadir ./data account new
+```
+
+- --datadir：指定账户存放路径
+
+创建配置创世区块的genesis.json文件
+
+`./private-ethereum/genesis.json`
+
+```json
+{
+    "config": {
+        "chainId": 9999,			//链id
+        "homesteadBlock": 0,
+        "eip150Block": 0,
+        "eip155Block": 0,
+        "eip158Block": 0,
+        "byzantiumBlock": 0,
+        "ethash": {}
+    },
+    "nonce": "0x0",
+    "timestamp": "0x0",
+    "extraData": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "gasLimit": "0x80000000", //每个区块最大的gas消耗
+    "difficulty": "0x01",	//出块难度，数值越大，矿工挖矿出块的难度越大
+    "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "coinbase": "0x0000000000000000000000000000000000000000",
+    "alloc": {//资产配置初始化，提前定义哪些地址所拥有的原生代币的数量，单位是wei
+        "0xb321D7d29099c329e7753913Bf3f7a6361f8eE04": {
+            "balance": "0xffffffffffffffffffffffffff"
+        }
+    },
+    "number": "0x0",
+    "gasUsed": "0x0",
+    "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+}
+
+```
+
+ 一般来说，在上述文件中需要我们进行配置的是链ID、出块难度和初始资产
+
+文件保存后执行私链配置初始化命令
+
+```
+geth init --datadir data genesis.json
+```
+
+​    其中--datadir字段用于配置私链数据的存储位置，这里存在data文件夹。输入命令后等待片刻，看到“Successfully wrote genesis state”的日志则表示配置完成。
+
+geth命令启动私链了
+
+```
+geth --datadir data --networkid 9999 --http --http.addr 0.0.0.0 --http.port 8545 --http.corsdomain "*" --port 30305 --allow-insecure-unlock console 2>>geth.log
+```
+
+- --datadir字段用于指示私链数据的存储位置，即工作目录；
+- --networkid字段用于配置私链id，需要与genesis.json文件内预定义的一致；
+- --http字段用于启用HTTP-RPC服务，主要应用于与前端页面的交互；
+- --http.addr字段表示节点接受的http连接的地址，0.0.0.0表示可以接受所有ip地址的http请求；
+- --http.port字段用于指定监听端口，默认是8545；最好不要用这个默认端口号，容易被攻击
+- --http.corsdomain字段表示允许跨域请求的域名列表，“*”表示允许所有的跨域请求，不开启的话metamask钱包可能无法连接上搭建的私链；
+- --port字段用于指定节点之间通信的端口，默认是30303；
+- --allow-insecure-unlock表示允许不安全的账户解锁行为，开启这个选项后通过http连接到私链的钱包才能解锁账户进行转账操作；
+- console表示在运行私链节点的同时开启控制台，这样就可以在监控私链节点状态的同时对节点进行操作。因为geth命令运行完后会不断弹出监控日志影响到控制台的使用，因此在命令最后添加2>>geth.log就可以让监控日志输入到当前目录的geth.log文件中而不影响控制台的使用，然后在新开一个终端用tail -f geth.log的命令实时监控节点的日志即可。(如果不愿意这么麻烦可以把2>>geth.log删除)
+
+查看日志：
+
+```
+cd ./private-eth
+tail -f geth.log
+```
+
+geth启动完成后如果需要交易需要在控制台开启挖矿才能交易
+
+```
+> miner.start(8) //括号里为线程数
+> null
+```
+
+`miner.stop`停止挖矿
+
+在新命令行窗口连接私链进入新的控制台：
+
+```
+geth attach data/geth.ipc
+```
+
+转账
+
+1. 交易前需先解锁账户
+
+   `> personal.unlockAccount(eth.accounts[0],"密码")`
+
+2. 发送转账交易
+
+   ```
+   > eth.sendTransaction({from:eth.accounts[0], to:eth.accounts[1], value:web3.toWei(1000,"ether")})
+   ```
+
+## get启动的main函数  cmd/geth/main.go
+
+看到main函数一上来就直接运行了。  go语言会自动按照一定的顺序先调用所有包的init()函数。然后才会调用main()函数。 
 
 	func main() {
 		if err := app.Run(os.Args); err != nil {
@@ -12,7 +152,6 @@ geth是我们的go-ethereum最主要的一个命令行工具。 也是我们的�
 			os.Exit(1)
 		}
 	}
-	
 
 main.go的init函数
 app是一个三方包gopkg.in/urfave/cli.v1的实例。 这个三方包的用法大致就是首先构造这个app对象。 通过代码配置app对象的行为，提供一些回调函数。然后运行的时候直接在main函数里面运行 app.Run(os.Args)就行了。
@@ -21,9 +160,9 @@ app是一个三方包gopkg.in/urfave/cli.v1的实例。 这个三方包的用法
 		...
 		"gopkg.in/urfave/cli.v1"
 	)
-
+	
 	var (
-
+	
 		app = utils.NewApp(gitCommit, "the go-ethereum command line interface")
 		// flags that configure the node
 		nodeFlags = []cli.Flag{
@@ -112,34 +251,37 @@ app是一个三方包gopkg.in/urfave/cli.v1的实例。 这个三方包的用法
 	// 如果没有指定特殊的子命令，那么geth是系统主要的入口。
 	// 它会根据提供的参数创建一个默认的节点。并且以阻塞的模式运行这个节点，等待着节点被终止。
 	func geth(ctx *cli.Context) error {
-		node := makeFullNode(ctx)
-		startNode(ctx, node)
-		node.Wait()
+			if args := ctx.Args().Slice(); len(args) > 0 {
+			return fmt.Errorf("invalid command: %q", args[0])
+		}
+		prepare(ctx)
+		stack, backend := makeFullNode(ctx) //创建全节点
+		defer stack.Close()
+	
+		startNode(ctx, stack, backend, false) //开启节点
+		stack.Wait() //阻塞模式运行
 		return nil
 	}
 
 makeFullNode函数，
-	
-	func makeFullNode(ctx *cli.Context) *node.Node {
+	//加载geth配置和创建eth后端
+	func makeFullNode(ctx *cli.Context) (*node.Node, ethapi.Backend) {
 		// 根据命令行参数和一些特殊的配置来创建一个node
 		stack, cfg := makeConfigNode(ctx)
+		
 		// 把eth的服务注册到这个节点上面。 eth服务是以太坊的主要的服务。 是以太坊功能的提供者。
-		utils.RegisterEthService(stack, &cfg.Eth)
+		backend, eth := utils.RegisterEthService(stack, &cfg.Eth)
 	
-		// Whisper must be explicitly enabled by specifying at least 1 whisper flag or in dev mode
-		// Whisper是一个新的模块，用来进行加密通讯的功能。 需要显式的提供参数来启用，或者是处于开发模式。
-		shhEnabled := enableWhisper(ctx)
-		shhAutoEnabled := !ctx.GlobalIsSet(utils.WhisperEnabledFlag.Name) && ctx.GlobalIsSet(utils.DevModeFlag.Name)
-		if shhEnabled || shhAutoEnabled {
-			if ctx.GlobalIsSet(utils.WhisperMaxMessageSizeFlag.Name) {
-				cfg.Shh.MaxMessageSize = uint32(ctx.Int(utils.WhisperMaxMessageSizeFlag.Name))
-			}
-			if ctx.GlobalIsSet(utils.WhisperMinPOWFlag.Name) {
-				cfg.Shh.MinimumAcceptedPOW = ctx.Float64(utils.WhisperMinPOWFlag.Name)
-			}
-			// 注册Shh服务
-			utils.RegisterShhService(stack, &cfg.Shh)
+		// Warn users to migrate if they have a legacy freezer format.
+		if eth != nil && !ctx.IsSet(utils.IgnoreLegacyReceiptsFlag.Name) {
+			//迁移遗留数据
+			...
 		}
+		
+		// 配置日志过滤器 RPC API， 将 eth 日志过滤器添加到节点。
+		// 默认最大缓存块数是32
+		// 过滤器保活状态是5分钟
+		filterSystem := utils.RegisterFilterAPI(stack, backend, &cfg.Eth)
 	
 		// Add the Ethereum Stats daemon if requested.
 		if cfg.Ethstats.URL != "" {
