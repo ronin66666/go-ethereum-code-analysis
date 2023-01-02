@@ -101,7 +101,7 @@ RLP的源码不是很多， 主要分了三个文件
 
 下面是用户如何获取编码器和解码器的函数
 
-	
+
 	func cachedTypeInfo(typ reflect.Type, tags tags) (*typeinfo, error) {
 		typeCacheMutex.RLock()		//加读锁来保护，
 		info := typeCache[typekey{typ, tags}]
@@ -242,26 +242,28 @@ structFields函数遍历所有的字段，然后针对每一个字段调用cache
 #### 编码器 encode.go
 首先定义了空字符串和空List的值，分别是 0x80和0xC0。 注意，整形的0值的对应值也是0x80。这个在黄皮书上面是没有看到有定义的。 然后定义了一个接口类型给别的类型实现 EncodeRLP
 
-	var (
-		// Common encoded values.
-		// These are useful when implementing EncodeRLP.
-		EmptyString = []byte{0x80}
-		EmptyList   = []byte{0xC0}
-	)
-	
-	// Encoder is implemented by types that require custom
-	// encoding rules or want to encode private fields.
-	type Encoder interface {
-		// EncodeRLP should write the RLP encoding of its receiver to w.
-		// If the implementation is a pointer method, it may also be
-		// called for nil pointers.
-		//
-		// Implementations should generate valid RLP. The data written is
-		// not verified at the moment, but a future version might. It is
-		// recommended to write only a single value but writing multiple
-		// values or no value at all is also permitted.
-		EncodeRLP(io.Writer) error
-	}
+```
+var (
+	// Common encoded values.
+	// These are useful when implementing EncodeRLP.
+	EmptyString = []byte{0x80}
+	EmptyList   = []byte{0xC0}
+)
+
+// Encoder is implemented by types that require custom
+// encoding rules or want to encode private fields.
+type Encoder interface {
+	// EncodeRLP should write the RLP encoding of its receiver to w.
+	// If the implementation is a pointer method, it may also be
+	// called for nil pointers.
+	//
+	// Implementations should generate valid RLP. The data written is
+	// not verified at the moment, but a future version might. It is
+	// recommended to write only a single value but writing multiple
+	// values or no value at all is also permitted.
+	EncodeRLP(io.Writer) error
+}
+```
 
 然后定义了一个最重要的方法， 大部分的EncodeRLP方法都是直接调用了这个方法Encode方法。这个方法首先获取了一个encbuf对象。 然后调用这个对象的encode方法。encode方法中，首先获取了对象的反射类型，根据反射类型获取它的编码器，然后调用编码器的writer方法。 这个就跟上面谈到的typecache联系到一起了。
 	
@@ -414,7 +416,7 @@ encbuf是encode buffer的简写(我猜的)。encbuf出现在Encode方法，和�
 		}
 		return err
 	}
-
+	
 	func makeDecoder(typ reflect.Type, tags tags) (dec decoder, err error) {
 		kind := typ.Kind()
 		switch {
@@ -552,5 +554,4 @@ Stream的ListEnd方法，如果当前读取的数据数量pos不等于声明的�
 		s.size = 0
 		return nil
 	}
-
 

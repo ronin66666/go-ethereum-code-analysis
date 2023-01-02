@@ -2,14 +2,15 @@
 
 **希望能够分析以太坊的代码来学习区块链技术和GO语言的使用**
 
-分析[go-ethereum](https://github.com/ethereum/go-ethereum)的过程，我希望从依赖比较少的底层技术组件开始，慢慢深入到核心逻辑。
+分析[go-ethereum](https://github.com/ethereum/go-ethereum)的过程，我希望从依赖比较少的底层技术组件开始，慢慢深入到核心逻辑。当前版本1.10.26-stable
 
 ## 目录
 
 - [go-ethereum代码阅读环境搭建](/go-ethereum源码阅读环境搭建.md)
+- [geth搭建私链和启动流程分析](./geth搭建私链和启动流程分析.md)
 - [以太坊黄皮书 符号索引](a黄皮书里面出现的所有的符号索引.md)
-- [rlp源码解析](/rlp源码解析.md)
-- [trie源码分析](/trie源码分析.md)
+- [rlp源码解析](./rlp源码解析.md)
+- [trie源码分析](./trie源码分析.md)
 - [ethdb源码分析](/ethdb源码分析.md)
 - [rpc源码分析](/rpc源码分析.md)
 - [p2p源码分析](/p2p源码分析.md)
@@ -31,5 +32,4 @@
 - [miner挖矿部分源码分析CPU挖矿](/miner挖矿部分源码分析CPU挖矿.md)
 - [pow一致性算法](/pow一致性算法.md)
 - [以太坊测试网络Clique_PoA介绍](/以太坊测试网络Clique_PoA介绍.md)
-
 

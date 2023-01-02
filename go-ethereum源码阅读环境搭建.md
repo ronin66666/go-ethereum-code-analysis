@@ -40,7 +40,7 @@
 ![image](https://raw.githubusercontent.com/wugang33/go-ethereum-code-analysis/master/picture/go_env_2.png)
 
 ### Ubuntu 16.04 64bit
- 
+
 go安装包进行安装
 
 	apt install golang-go git -y

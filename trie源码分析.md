@@ -1,7 +1,7 @@
 包trie 实现了Merkle Patricia Tries，这里用简称MPT来称呼这种数据结构，这种数据结构实际上是一种Trie树变种，MPT是以太坊中一种非常重要的数据结构，用来存储用户账户的状态及其变更、交易信息、交易的收据信息。MPT实际上是三种数据结构的组合，分别是Trie树， Patricia Trie， 和Merkle树。下面分别介绍这三种数据结构。
 
 ## Trie树 (引用介绍 http://dongxicheng.org/structure/trietree/)
-Trie树，又称字典树，单词查找树或者前缀树，是一种用于快速检索的多叉树结构，如英文字母的字典树是一个26叉树，数字的字典树是一个10叉树。
+Trie树，又称字典树，单词查找树或者前缀树，他是一个树形结构，用来解决一组字符串集合中快速查找某个字符串的问题，比如搜索引擎中的搜索关键词提示功能。
 
 Trie树可以利用字符串的公共前缀来节约存储空间。如下图所示，该trie树用10个节点保存了6个字符串：tea，ten，to，in，inn，int：
 
@@ -678,7 +678,7 @@ decodeRef方法根据数据类型进行解析，如果类型是list，那么有�
 
 decodeFull方法。根decodeShort方法的流程差不多。
 
-	
+
 	func decodeFull(hash, buf, elems []byte, cachegen uint16) (*fullNode, error) {
 		n := &fullNode{flags: nodeFlag{hash: hash, gen: cachegen}}
 		for i := 0; i < 16; i++ {
@@ -718,7 +718,7 @@ Trie树的cache管理。 还记得Trie树的结构里面有两个参数， 一�
 				....
 				return true, &shortNode{n.Key, nn, t.newFlag()}, nil
 			}
-
+	
 	// newFlag returns the cache flag value for a newly created node.
 	func (t *Trie) newFlag() nodeFlag {
 		return nodeFlag{dirty: true, gen: t.cachegen}
@@ -900,7 +900,7 @@ VerifyProof方法，接收一个rootHash参数，key参数，和proof数组， �
 		secKeyCache      map[string][]byte      //记录hash值和对应的key的映射
 		secKeyCacheOwner *SecureTrie // Pointer to self, replace the key cache on mismatch
 	}
-
+	
 	func NewSecure(root common.Hash, db Database, cachelimit uint16) (*SecureTrie, error) {
 		if db == nil {
 			panic("NewSecure called with nil database")
